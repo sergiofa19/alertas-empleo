@@ -1,7 +1,6 @@
 const fetch = require('node-fetch');
 const xml2js = require('xml2js');
 
-// URLs corregidas: sin 'www.' en WWWhatsnew para evitar fallos de SSL, y reemplazado el RSS extinto de Trabajos IT
 const FEEDS_RSS = [
   'https://wwwhatsnew.com/category/empleo/feed/',
   'https://www.getonbrd.com/jobs-rss'
@@ -10,7 +9,7 @@ const FEEDS_RSS = [
 async function obtenerRSS() {
   console.log('🔍 Consultando Feeds RSS...');
   const ofertas = [];
-  const parser = new xml2js.Parser({ explicitArray: false });
+  const parser = new xml2js.Parser({ explicitArray: false, relaxed: true });
 
   for (const url of FEEDS_RSS) {
     try {
@@ -26,7 +25,11 @@ async function obtenerRSS() {
         continue;
       }
 
-      const xmlText = await response.text();
+      let xmlText = await response.text();
+      
+      // Sanitizar ampersands huérfanos que rompen el parser XML
+      xmlText = xmlText.replace(/&(?!(amp|lt|gt|quot|apos);)/g, '&amp;');
+
       const result = await parser.parseStringPromise(xmlText);
 
       const items = result?.rss?.channel?.item || result?.feed?.entry || [];
