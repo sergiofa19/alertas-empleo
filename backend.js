@@ -1,8 +1,8 @@
-import fetch from "node-fetch";
 import express from "express";
+import fetch from "node-fetch";
 
 const app = express();
-app.use(express.json()); // Necesario para leer JSON en POST
+app.use(express.json());
 
 // --- Almacenamiento en memoria ---
 let ofertasFiltradas = [];
@@ -16,10 +16,11 @@ const requisitos = {
     ingles: "B2"
 };
 
-// --- Función para obtener ofertas reales ---
+// --- Función principal: obtener ofertas y enviarlas a Render ---
 async function obtenerOfertas() {
     try {
-        const url = "https://api.infojobs.net/api/7/offer"; // Ejemplo real
+        // ⚠️ IMPORTANTE: sustituye TU_TOKEN_DE_INFOJOBS por tu token real
+        const url = "https://api.infojobs.net/api/7/offer";
         const headers = {
             "Authorization": "Bearer TU_TOKEN_DE_INFOJOBS"
         };
@@ -27,6 +28,7 @@ async function obtenerOfertas() {
         const res = await fetch(url, { headers });
         const data = await res.json();
 
+        // --- Filtrado ---
         ofertasFiltradas = data.items.filter(oferta => {
             const cumpleTecnologias = requisitos.tecnologias.every(t =>
                 oferta.description.toLowerCase().includes(t.toLowerCase())
@@ -36,12 +38,15 @@ async function obtenerOfertas() {
             const remoto = oferta.teleworking?.value === "Full-remote";
             const pais = oferta.country?.value === requisitos.pais;
 
-            return cumpleTecnologias && experiencia <= requisitos.experienciaMax && remoto && pais;
+            return cumpleTecnologias &&
+                   experiencia <= requisitos.experienciaMax &&
+                   remoto &&
+                   pais;
         });
 
-        console.log("Ofertas obtenidas:", ofertasFiltradas.length);
+        console.log("Ofertas filtradas:", ofertasFiltradas.length);
 
-        // --- Enviar las ofertas a tu backend en Render (si lo ejecuta GitHub Actions) ---
+        // --- Enviar a Render (solo cuando lo ejecuta GitHub Actions) ---
         await fetch("https://alertas-empleo.onrender.com/actualizar", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -65,4 +70,22 @@ app.post("/actualizar", (req, res) => {
     }
 });
 
-// --- Endpoint público para tu frontend
+// --- Endpoint público para tu frontend ---
+app.get("/alertas", (req, res) => {
+    res.json(ofertasFiltradas);
+});
+
+// --- Ruta raíz opcional ---
+app.get("/", (req, res) => {
+    res.send("API de alertas SOC funcionando");
+});
+
+// --- Render usa PORT dinámico ---
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+    console.log("Backend de alertas activo en puerto " + PORT);
+});
+
+// --- Si quieres probar localmente, descomenta esto ---
+// obtenerOfertas();
