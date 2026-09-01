@@ -2,7 +2,8 @@ import fetch from "node-fetch";
 import obtenerLinkedIn from "./fuentes/linkedin.js";
 import obtenerIndeed from "./fuentes/indeed.js";
 import obtenerJooble from "./fuentes/jooble.js";
-import obtenerSEPE from "./fuentes/sepe.js";
+// SEPE desactivado porque devuelve la página de cookies
+// import obtenerSEPE from "./fuentes/sepe.js";
 import obtenerTecnoempleo from "./fuentes/tecnoempleo.js";
 import obtenerInfoempleo from "./fuentes/infoempleo.js";
 
@@ -20,19 +21,23 @@ function filtrar(ofertas) {
         const ubicacion = (oferta.ubicacion || "").toLowerCase();
         const textoCompleto = `${titulo} ${desc} ${ubicacion}`;
 
+        // 1. Validar España por ubicación REAL
         const esPaisValido =
             requisitos.ciudades.some(ciudad => textoCompleto.includes(ciudad));
 
         if (!esPaisValido) return false;
 
+        // 2. Detectar remoto (opcional)
         const esRemoto =
             textoCompleto.includes("remoto") ||
             textoCompleto.includes("remote") ||
             textoCompleto.includes("teletrabajo");
 
+        // 3. Detectar tecnologías (opcional)
         const tieneTecnologia =
             tecnologiasLower.some(tec => textoCompleto.includes(tec));
 
+        // 4. Detectar SOC real
         const esSOC =
             titulo.includes("soc") ||
             titulo.includes("security") ||
@@ -43,6 +48,7 @@ function filtrar(ofertas) {
             desc.includes("seguridad") ||
             desc.includes("cyber");
 
+        // Aceptar si es SOC y está en España
         return esSOC && (esRemoto || tieneTecnologia);
     });
 }
@@ -54,7 +60,7 @@ async function main() {
         { nombre: "LinkedIn", fn: obtenerLinkedIn },
         { nombre: "Indeed", fn: obtenerIndeed },
         { nombre: "Jooble", fn: obtenerJooble },
-        { nombre: "SEPE", fn: obtenerSEPE },
+        // { nombre: "SEPE", fn: obtenerSEPE },  // SEPE desactivado
         { nombre: "Tecnoempleo", fn: obtenerTecnoempleo },
         { nombre: "Infoempleo", fn: obtenerInfoempleo }
     ];
@@ -77,6 +83,7 @@ async function main() {
 
     console.log("📌 Total ofertas obtenidas:", todas.length);
 
+    // 🔵 DEBUG: imprimir ofertas sin filtrar
     console.log("🟦 OFERTAS SIN FILTRAR:");
     console.log(JSON.stringify(todas, null, 2));
 
