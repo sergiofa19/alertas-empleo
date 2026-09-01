@@ -1,22 +1,5 @@
 import fetch from "node-fetch";
-
-// ===============================
-// IMPORTAR TODAS LAS FUENTES
-// ===============================
-
-// Estas están desactivadas porque devuelven vacío o errores
-// import obtenerLinkedIn from "./fuentes/linkedin.js";
-// import obtenerIndeed from "./fuentes/indeed.js";
-// import obtenerJooble from "./fuentes/jooble.js";
-// import obtenerSEPE from "./fuentes/sepe.js";
-// import obtenerInfoempleo from "./fuentes/infoempleo.js";
-
-// Esta es la única que funciona hoy
 import obtenerTecnoempleo from "./fuentes/tecnoempleo.js";
-
-// ===============================
-// CONFIGURACIÓN
-// ===============================
 
 const tecnologias = [
     "siem",
@@ -33,10 +16,6 @@ const tecnologias = [
 
 const ciudades = ["madrid", "barcelona", "sevilla", "valencia", "españa"];
 
-// ===============================
-// FILTRO SOC
-// ===============================
-
 function filtrar(ofertas) {
     return ofertas.filter(oferta => {
         const texto = `${oferta.titulo} ${oferta.descripcion} ${oferta.ubicacion}`.toLowerCase();
@@ -48,46 +27,17 @@ function filtrar(ofertas) {
     });
 }
 
-// ===============================
-// MAIN
-// ===============================
-
 async function main() {
-    console.log("🔍 Obteniendo ofertas desde fuentes disponibles...");
+    console.log("🔍 Obteniendo ofertas desde Tecnoempleo...");
 
-    const fuentesMap = [
-        // { nombre: "LinkedIn", fn: obtenerLinkedIn },
-        // { nombre: "Indeed", fn: obtenerIndeed },
-        // { nombre: "Jooble", fn: obtenerJooble },
-        // { nombre: "SEPE", fn: obtenerSEPE },
-        // { nombre: "Infoempleo", fn: obtenerInfoempleo },
+    const ofertas = await obtenerTecnoempleo();
 
-        // ÚNICA FUENTE FUNCIONAL HOY:
-        { nombre: "Tecnoempleo", fn: obtenerTecnoempleo }
-    ];
-
-    const resultados = await Promise.allSettled(
-        fuentesMap.map(async ({ nombre, fn }) => {
-            try {
-                const ofertas = await fn();
-                return Array.isArray(ofertas) ? ofertas : [];
-            } catch (err) {
-                console.warn(`⚠️ Error en la fuente [${nombre}]:`, err.message || err);
-                return [];
-            }
-        })
-    );
-
-    const todas = resultados
-        .filter(res => res.status === "fulfilled")
-        .flatMap(res => res.value);
-
-    console.log("📌 Total ofertas obtenidas:", todas.length);
+    console.log("📌 Total ofertas obtenidas:", ofertas.length);
 
     console.log("🟦 OFERTAS SIN FILTRAR:");
-    console.log(JSON.stringify(todas, null, 2));
+    console.log(JSON.stringify(ofertas, null, 2));
 
-    const filtradas = filtrar(todas);
+    const filtradas = filtrar(ofertas);
 
     console.log("🎯 Ofertas filtradas:", filtradas.length);
 
