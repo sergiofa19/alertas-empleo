@@ -1,65 +1,16 @@
 import express from "express";
-import fetch from "node-fetch";
 
 const app = express();
 app.use(express.json());
 
-// --- Almacenamiento en memoria ---
+// Aquí guardamos las ofertas que envía GitHub Actions
 let ofertasFiltradas = [];
 
-// --- Requisitos de filtrado ---
-const requisitos = {
-    tecnologias: ["SIEM", "Linux", "Microsoft Sentinel"],
-    experienciaMax: 2,
-    remoto: true,
-    pais: "España",
-    ingles: "B2"
-};
-
-// --- Función principal: obtener ofertas (NO se ejecuta en Render) ---
-async function obtenerOfertas() {
-    try {
-        const url = "https://api.infojobs.net/api/7/offer";
-        const headers = {
-            "Authorization": "Bearer TU_TOKEN_DE_INFOJOBS"
-        };
-
-        const res = await fetch(url, { headers });
-        const data = await res.json();
-
-        ofertasFiltradas = data.items.filter(oferta => {
-            const cumpleTecnologias = requisitos.tecnologias.every(t =>
-                oferta.description.toLowerCase().includes(t.toLowerCase())
-            );
-
-            const experiencia = oferta.experienceMin?.value || 0;
-            const remoto = oferta.teleworking?.value === "Full-remote";
-            const pais = oferta.country?.value === requisitos.pais;
-
-            return cumpleTecnologias &&
-                   experiencia <= requisitos.experienciaMax &&
-                   remoto &&
-                   pais;
-        });
-
-        console.log("Ofertas filtradas:", ofertasFiltradas.length);
-
-        await fetch("https://alertas-empleo.onrender.com/actualizar", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ofertas: ofertasFiltradas })
-        });
-
-    } catch (error) {
-        console.error("Error obteniendo ofertas:", error);
-    }
-}
-
-// --- Endpoint para recibir actualizaciones desde GitHub Actions ---
+// Endpoint donde GitHub Actions envía las ofertas ya filtradas
 app.post("/actualizar", (req, res) => {
     try {
         ofertasFiltradas = req.body.ofertas || [];
-        console.log("Ofertas actualizadas vía GitHub Actions:", ofertasFiltradas.length);
+        console.log("Ofertas actualizadas:", ofertasFiltradas.length);
         res.send("Actualizado correctamente");
     } catch (error) {
         console.error("Error al actualizar:", error);
@@ -67,26 +18,28 @@ app.post("/actualizar", (req, res) => {
     }
 });
 
-// --- Endpoint público para tu frontend ---
+// Endpoint público para ver las ofertas
 app.get("/alertas", (req, res) => {
     res.json(ofertasFiltradas);
 });
 
-// --- Ruta raíz opcional ---
+// Página principal
 app.get("/", (req, res) => {
     res.send("API de alertas SOC funcionando");
 });
 
-// --- Render usa PORT dinámico ---
+// Render asigna el puerto automáticamente
 const PORT = process.env.PORT || 3000;
 
+// Arrancar servidor
 app.listen(PORT, () => {
     console.log("Backend de alertas activo en puerto " + PORT);
 });
 
-// Mantener el proceso vivo para Render
+// Mantener el proceso vivo en Render
 setInterval(() => {
     console.log("Manteniendo backend activo...");
 }, 10000);
 
-// obtenerOfertas();  // NO ejecutar en Render
+// IMPORTANTE: NO ejecutar obtenerOfertas() aquí
+// GitHub Actions ejecuta obtenerMultiples.js
