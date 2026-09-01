@@ -1,0 +1,14 @@
+{
+  "name": "alertas-soc",
+  "version": "1.0.0",
+  "main": "backend.js",
+  "type": "module",
+  "scripts": {
+    "start": "node backend.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "node-fetch": "^3.3.2",
+    "cron": "^2.4.4"
+  }
+}
