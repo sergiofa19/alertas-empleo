@@ -2,6 +2,7 @@ const fetch = require('node-fetch');
 const obtenerRSS = require('./fuentes/rss');
 const obtenerTecnoempleo = require('./fuentes/tecnoempleo');
 
+// Palabras clave enfocas en SOC y Ciberseguridad
 const PALABRAS_CLAVE = ['soc', 'siem', 'sentinel', 'ciberseguridad', 'cybersecurity', 'seguridad', 'analista', 'incident'];
 
 function esOfertaRelevante(oferta) {
@@ -24,14 +25,15 @@ async function ejecutarOrquestador() {
   const ofertasTecno = await obtenerTecnoempleo();
   todasLasOfertas.push(...ofertasTecno);
 
-  // Filtrar ofertas por SOC / Ciberseguridad
+  // Filtrar ofertas por palabras clave
   const ofertasFiltradas = todasLasOfertas.filter(esOfertaRelevante);
   console.log(`\n✅ Total de ofertas relevantes filtradas: ${ofertasFiltradas.length}`);
 
   // Enviar a Render
   if (ofertasFiltradas.length > 0) {
     try {
-      const URL_RENDER = process.env.URL_BACKEND || 'https://tu-servicio-real.onrender.com/actualizar'; // Pon la URL exacta de Render
+      // URL real de tu servicio desplegado en Render
+      const URL_RENDER = process.env.URL_BACKEND || 'https://alertas-empleo.onrender.com/actualizar';
       console.log(`📡 Enviando ofertas a ${URL_RENDER}...`);
 
       const res = await fetch(URL_RENDER, {
