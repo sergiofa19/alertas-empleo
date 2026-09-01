@@ -20,23 +20,19 @@ function filtrar(ofertas) {
         const ubicacion = (oferta.ubicacion || "").toLowerCase();
         const textoCompleto = `${titulo} ${desc} ${ubicacion}`;
 
-        // 1. Validar España por ubicación REAL
         const esPaisValido =
             requisitos.ciudades.some(ciudad => textoCompleto.includes(ciudad));
 
         if (!esPaisValido) return false;
 
-        // 2. Detectar remoto (opcional)
         const esRemoto =
             textoCompleto.includes("remoto") ||
             textoCompleto.includes("remote") ||
             textoCompleto.includes("teletrabajo");
 
-        // 3. Detectar tecnologías (opcional)
         const tieneTecnologia =
             tecnologiasLower.some(tec => textoCompleto.includes(tec));
 
-        // 4. Detectar SOC real
         const esSOC =
             titulo.includes("soc") ||
             titulo.includes("security") ||
@@ -47,7 +43,6 @@ function filtrar(ofertas) {
             desc.includes("seguridad") ||
             desc.includes("cyber");
 
-        // Aceptar si es SOC y está en España
         return esSOC && (esRemoto || tieneTecnologia);
     });
 }
@@ -65,4 +60,50 @@ async function main() {
     ];
 
     const resultados = await Promise.allSettled(
-        fuentesMap.map(async
+        fuentesMap.map(async ({ nombre, fn }) => {
+            try {
+                const ofertas = await fn();
+                return Array.isArray(ofertas) ? ofertas : [];
+            } catch (err) {
+                console.warn(`⚠️ Error en la fuente [${nombre}]:`, err.message || err);
+                return [];
+            }
+        })
+    );
+
+    const todas = resultados
+        .filter(res => res.status === "fulfilled")
+        .flatMap(res => res.value);
+
+    console.log("📌 Total ofertas obtenidas:", todas.length);
+
+    console.log("🟦 OFERTAS SIN FILTRAR:");
+    console.log(JSON.stringify(todas, null, 2));
+
+    const filtradas = filtrar(todas);
+    console.log("🎯 Ofertas filtradas:", filtradas.length);
+
+    if (filtradas.length === 0) {
+        console.log("⚠️ No hay ofertas para enviar a Render.");
+        return;
+    }
+
+    try {
+        const response = await fetch("https://alertas-empleo.onrender.com/actualizar", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ofertas: filtradas })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP Error Status: ${response.status} ${response.statusText}`);
+        }
+
+        console.log("✅ Ofertas enviadas a Render correctamente.");
+    } catch (e) {
+        console.error("❌ Error al enviar datos al servidor de Render:", e.message);
+        process.exit(1);
+    }
+}
+
+main();
