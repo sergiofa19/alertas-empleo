@@ -49,7 +49,7 @@ async function ejecutarOrquestador() {
   // 4. Enviar payload filtrado al backend en Render
   if (ofertasFiltradas.length > 0) {
     try {
-      const URL_RENDER = 'https://tu-backend.onrender.com/actualizar'; // Sustituye con tu URL real
+      const URL_RENDER = 'https://alertas-empleo.onrender.com'; // Sustituye con tu URL real
       console.log(`📡 Enviando ofertas a ${URL_RENDER}...`);
 
       const res = await fetch(URL_RENDER, {
