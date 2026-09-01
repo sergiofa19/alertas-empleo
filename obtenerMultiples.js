@@ -1,24 +1,9 @@
 const fetch = require('node-fetch');
-
-// Importar fuentes existentes y nuevas
-const obtenerManfred = require('./fuentes/manfred');
 const obtenerRSS = require('./fuentes/rss');
+const obtenerTecnoempleo = require('./fuentes/tecnoempleo');
 
-// Palabras clave requeridas para filtrar las ofertas de SOC/Seguridad
-const PALABRAS_CLAVE = [
-  'soc',
-  'siem',
-  'sentinel',
-  'ciberseguridad',
-  'cybersecurity',
-  'seguridad',
-  'analista de seguridad',
-  'incident response'
-];
+const PALABRAS_CLAVE = ['soc', 'siem', 'sentinel', 'ciberseguridad', 'cybersecurity', 'seguridad', 'analista', 'incident'];
 
-/**
- * Filtra si el título o contenido de la oferta contiene al menos una palabra clave relevante
- */
 function esOfertaRelevante(oferta) {
   if (!oferta || !oferta.titulo) return false;
   const texto = oferta.titulo.toLowerCase();
@@ -27,29 +12,26 @@ function esOfertaRelevante(oferta) {
 
 async function ejecutarOrquestador() {
   console.log('🚀 Iniciando recolección de ofertas...');
-
   let todasLasOfertas = [];
 
-  // 1. Ejecutar Manfred
-  console.log('🔍 Consultando Manfred...');
-  const ofertasManfred = await obtenerManfred();
-  console.log(` -> Manfred devolvió ${ofertasManfred.length} ofertas raw.`);
-  todasLasOfertas.push(...ofertasManfred);
-
-  // 2. Ejecutar Feeds RSS
+  // 1. Feeds RSS
   console.log('🔍 Consultando Feeds RSS...');
   const ofertasRSS = await obtenerRSS();
-  console.log(` -> RSS devolvió ${ofertasRSS.length} ofertas raw.`);
   todasLasOfertas.push(...ofertasRSS);
 
-  // 3. Filtrar solo ofertas relevantes (SOC / Ciberseguridad)
+  // 2. Tecnoempleo vía Puppeteer
+  console.log('🔍 Consultando Tecnoempleo...');
+  const ofertasTecno = await obtenerTecnoempleo();
+  todasLasOfertas.push(...ofertasTecno);
+
+  // Filtrar ofertas por SOC / Ciberseguridad
   const ofertasFiltradas = todasLasOfertas.filter(esOfertaRelevante);
   console.log(`\n✅ Total de ofertas relevantes filtradas: ${ofertasFiltradas.length}`);
 
-  // 4. Enviar payload filtrado al backend en Render
+  // Enviar a Render
   if (ofertasFiltradas.length > 0) {
     try {
-      const URL_RENDER = 'https://alertas-empleo.onrender.com'; // Sustituye con tu URL real
+      const URL_RENDER = process.env.URL_BACKEND || 'https://tu-servicio-real.onrender.com/actualizar'; // Pon la URL exacta de Render
       console.log(`📡 Enviando ofertas a ${URL_RENDER}...`);
 
       const res = await fetch(URL_RENDER, {
