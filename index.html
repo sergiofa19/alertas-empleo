@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Alertas Empleo IT</title>
+
+<style>
+    body {
+        background: #0d1117;
+        color: #fff;
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+    }
+
+    h1 {
+        text-align: center;
+        color: #58a6ff;
+        margin-bottom: 30px;
+    }
+
+    #contenedor {
+        max-width: 900px;
+        margin: auto;
+    }
+
+    .card {
+        background: #161b22;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 12px;
+        border: 1px solid #30363d;
+        transition: transform 0.2s ease;
+    }
+
+    .card:hover {
+        transform: scale(1.02);
+    }
+
+    .titulo {
+        font-size: 22px;
+        margin: 0;
+        color: #58a6ff;
+    }
+
+    .empresa {
+        color: #c9d1d9;
+        margin: 5px 0 10px 0;
+    }
+
+    .remoto {
+        color: #3fb950;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .tags {
+        margin-top: 10px;
+    }
+
+    .tag {
+        display: inline-block;
+        background: #238636;
+        padding: 6px 12px;
+        margin: 4px;
+        border-radius: 8px;
+        font-size: 12px;
+    }
+
+    .indice {
+        margin-top: 15px;
+        background: #21262d;
+        border-radius: 8px;
+        height: 10px;
+        overflow: hidden;
+    }
+
+    .barra {
+        height: 10px;
+        background: #3fb950;
+        width: 80%;
+    }
+
+    .no-ofertas {
+        text-align: center;
+        margin-top: 40px;
+        font-size: 18px;
+        color: #aaa;
+    }
+</style>
+
+</head>
+<body>
+
+<h1>Alertas Empleo IT</h1>
+
+<div id="contenedor"></div>
+
+<script>
+async function cargarOfertas() {
+    const res = await fetch("https://alertas-empleo.onrender.com/alertas");
+    const ofertas = await res.json();
+
+    const contenedor = document.getElementById("contenedor");
+    contenedor.innerHTML = "";
+
+    if (ofertas.length === 0) {
+        contenedor.innerHTML = `
+            <p class="no-ofertas">No hay ofertas compatibles en este momento.</p>
+        `;
+        return;
+    }
+
+    ofertas.forEach(o => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        // Generar tags dinámicos según descripción
+        const tecnologias = ["SIEM", "Linux", "Sentinel", "Azure", "Active Directory"];
+        const tagsHTML = tecnologias
+            .filter(t => o.descripcion.toLowerCase().includes(t.toLowerCase()))
+            .map(t => `<span class="tag">${t}</span>`)
+            .join("");
+
+        card.innerHTML = `
+            <h2 class="titulo">${o.titulo}</h2>
+            <p class="empresa">${o.fuente}</p>
+            <p class="remoto">100% Remoto España</p>
+
+            <div class="tags">
+                ${tagsHTML || '<span class="tag">IT</span>'}
+            </div>
+
+            <div class="indice">
+                <div class="barra"></div>
+            </div>
+        `;
+
+        contenedor.appendChild(card);
+    });
+}
+
+cargarOfertas();
+</script>
+
+</body>
+</html>
