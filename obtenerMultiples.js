@@ -13,6 +13,7 @@ const requisitos = {
 };
 
 // FILTRO RELAJADO (FUNCIONA)
+// versión sincronizada con workflow
 function filtrar(ofertas) {
     return ofertas.filter(oferta => {
         const desc = (oferta.descripcion || "").toLowerCase();
