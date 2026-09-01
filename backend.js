@@ -1,39 +1,53 @@
-import express from "express";
-import cors from "cors";
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
-app.use(cors());
+const PORT = process.env.PORT || 3000;
+const DATA_FILE = path.join(__dirname, 'data.json');
+
+// Middlewares para procesar JSON y servir archivos estáticos
 app.use(express.json());
+app.use(express.static(__dirname));
 
-// Aquí guardaremos las ofertas en memoria
-let ofertasFiltradas = [];
+// Endpoint para recibir las ofertas desde GitHub Actions
+app.post('/actualizar', (req, res) => {
+  try {
+    const nuevasOfertas = req.body;
 
-// Ruta raíz (evita "Cannot GET /")
-app.get("/", (req, res) => {
-    res.send("API de alertas SOC funcionando");
-});
-
-// Ruta para ver las ofertas
-app.get("/alertas", (req, res) => {
-    res.json(ofertasFiltradas);
-});
-
-// Ruta para actualizar las ofertas desde GitHub Actions
-app.post("/actualizar", (req, res) => {
-    const { ofertas } = req.body;
-
-    if (!Array.isArray(ofertas)) {
-        return res.status(400).json({ error: "Formato inválido" });
+    if (!Array.isArray(nuevasOfertas)) {
+      return res.status(400).json({ error: 'El cuerpo debe ser un array de ofertas.' });
     }
 
-    ofertasFiltradas = ofertas;
-    console.log("🔄 Ofertas actualizadas. Total:", ofertasFiltradas.length);
+    // Guardar en data.json
+    fs.writeFileSync(DATA_FILE, JSON.stringify(nuevasOfertas, null, 2), 'utf-8');
+    console.log(`[Backend] Se han guardado ${nuevasOfertas.length} ofertas en data.json`);
 
-    res.json({ ok: true });
+    return res.status(200).json({ status: 'ok', guardadas: nuevasOfertas.length });
+  } catch (error) {
+    console.error('[Backend] Error al guardar ofertas:', error.message);
+    return res.status(500).json({ error: 'Error interno guardando ofertas.' });
+  }
 });
 
-// Render usa este puerto automáticamente
-const PORT = process.env.PORT || 3000;
+// Endpoint para obtener las ofertas en la web
+app.get('/api/ofertas', (req, res) => {
+  try {
+    if (!fs.existsSync(DATA_FILE)) {
+      return res.json([]);
+    }
+    const data = fs.readFileSync(DATA_FILE, 'utf-8');
+    return res.json(JSON.parse(data || '[]'));
+  } catch (error) {
+    return res.status(500).json({ error: 'Error leyendo datos.' });
+  }
+});
+
+// Servir la página web en la raíz o en /alertas
+app.get(['/', '/alertas'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 app.listen(PORT, () => {
-    console.log("🚀 Backend de alertas SOC funcionando en el puerto", PORT);
+  console.log(`🚀 Servidor ejecutándose en el puerto ${PORT}`);
 });
