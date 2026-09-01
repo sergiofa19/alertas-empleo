@@ -21,7 +21,7 @@ jobs:
       - name: Instalar dependencias de Node
         run: npm install
 
-      - name: Instalar navegador Chromium para Puppeteer
+      - name: Instalar navegador Chrome
         run: npx puppeteer browsers install chrome
 
       - name: Ejecutar orquestador de ofertas
