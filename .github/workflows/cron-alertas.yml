@@ -2,9 +2,8 @@ name: Cron Alertas Empleo
 
 on:
   schedule:
-    # Se ejecuta todos los días a las 08:00 y a las 15:00 UTC
     - cron: '0 8,15 * * *'
-  workflow_dispatch: # Permite ejecutar el workflow manualmente
+  workflow_dispatch:
 
 jobs:
   scraping:
@@ -22,12 +21,8 @@ jobs:
       - name: Instalar dependencias de Node
         run: npm install
 
-      - name: Instalar dependencias del sistema y Chromium
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y chromium-browser
+      - name: Instalar navegador Chromium para Puppeteer
+        run: npx puppeteer browsers install chrome
 
       - name: Ejecutar orquestador de ofertas
-        env:
-          PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium-browser
         run: node obtenerMultiples.js
