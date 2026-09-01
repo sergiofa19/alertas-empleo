@@ -6,28 +6,27 @@ import obtenerSEPE from "./fuentes/sepe.js";
 import obtenerTecnoempleo from "./fuentes/tecnoempleo.js";
 import obtenerInfoempleo from "./fuentes/infoempleo.js";
 
-// Tecnologías deseadas (no obligatorias)
 const requisitos = {
     tecnologias: ["SIEM", "Linux", "Microsoft Sentinel", "Azure", "Active Directory"],
     remoto: true,
     pais: "España"
 };
 
-// FILTRO CORREGIDO Y REALISTA
+// FILTRO RELAJADO
 function filtrar(ofertas) {
     return ofertas.filter(oferta => {
         const desc = (oferta.descripcion || "").toLowerCase();
 
-        // Remoto y país siguen siendo obligatorios
         const remoto = oferta.remoto === true;
         const pais = oferta.pais === requisitos.pais;
 
-        // Ahora basta con que aparezca UNA tecnología
+        // Basta con que aparezca UNA tecnología
         const algunaTecnologia = requisitos.tecnologias.some(t =>
             desc.includes(t.toLowerCase())
         );
 
-        return remoto && pais && algunaTecnologia;
+        // Si no aparece ninguna tecnología, igualmente la aceptamos
+        return remoto && pais && (algunaTecnologia || true);
     });
 }
 
@@ -53,7 +52,6 @@ async function main() {
 
         console.log("🎯 Ofertas filtradas:", filtradas.length);
 
-        // Enviar al backend en Render
         await fetch("https://alertas-empleo.onrender.com/actualizar", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -68,3 +66,4 @@ async function main() {
 }
 
 main();
+
