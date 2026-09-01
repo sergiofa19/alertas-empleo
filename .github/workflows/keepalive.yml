@@ -3,20 +3,20 @@ name: Keep Alive
 on:
   schedule:
     - cron: "0 */12 * * *"
-  workflow_dispatch:
+  workflow_dispatch: 
 
 jobs:
   keepalive:
-    runs-on: ubuntu-latest
+  runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+  steps:
+    -name: Checkout
+     uses: actions/checkout@v3
 
-      - name: Update keepalive file
-        run: echo "Última actualización: $(date)" > keepalive.txt
+    -name: Upadate Keepalive file
+     run: echo "Última actualización: $(date)" > keepalive.txt
 
-      - name: Commit changes
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: "Keep repo active"
+    -name: Commit changes
+     uses: stefanzweifel/git-auto-commit-action@v4
+     with:
+       commit_message: "Keep repo active"
