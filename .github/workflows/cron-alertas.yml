@@ -2,9 +2,9 @@ name: Cron Alertas Empleo
 
 on:
   schedule:
-    # Se ejecuta automáticamente todos los días a las 08:00 y a las 15:00 UTC
+    # Se ejecuta todos los días a las 08:00 y a las 15:00 UTC
     - cron: '0 8,15 * * *'
-  workflow_dispatch: # Permite ejecutar el workflow manualmente desde la pestaña 'Actions' para hacer pruebas
+  workflow_dispatch: # Permite ejecutar el workflow manualmente
 
 jobs:
   scraping:
@@ -17,13 +17,12 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: '22'
 
       - name: Instalar dependencias de Node
-        run: npm ci || npm install
+        run: npm install
 
-      - name: Instalar dependencias del sistema y Chromium (para Puppeteer/Scraping)
+      - name: Instalar dependencias del sistema y Chromium
         run: |
           sudo apt-get update
           sudo apt-get install -y chromium-browser
