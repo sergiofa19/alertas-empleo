@@ -3,14 +3,11 @@ name: Obtener ofertas de empleo
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 */6 * * *" # cada 6 horas
+    - cron: "0 */6 * * *"
 
 jobs:
   ejecutar:
     runs-on: ubuntu-latest
-
-    env:
-      JOOBLE_API_KEY: ${{ secrets.JOOBLE_API_KEY }}
 
     steps:
       - name: Checkout
