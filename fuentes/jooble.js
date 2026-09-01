@@ -1,22 +1,40 @@
 import fetch from "node-fetch";
 
+const JOOBLE_API_KEY = process.env.JOOBLE_API_KEY;
+
+if (!JOOBLE_API_KEY) {
+    console.error("❌ ERROR: Falta JOOBLE_API_KEY en GitHub Secrets.");
+    process.exit(1);
+}
+
 export default async function obtenerJooble() {
     try {
-        const url = "https://es.jooble.org/SearchResult?rgn=España&ukw=SOC+Analyst";
-        const res = await fetch(url);
-        const html = await res.text();
+        const res = await fetch(`https://jooble.org/api/${JOOBLE_API_KEY}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                keywords: "security analyst SOC",
+                location: "España"
+            })
+        });
 
-        const ofertas = [...html.matchAll(/class="position"[^>]*>([^<]+)</g)].map(m => ({
-            titulo: m[1].trim(),
-            descripcion: m[1].trim(),
-            remoto: m[1].toLowerCase().includes("remote"),
-            pais: "España",
+        const data = await res.json();
+
+        if (!data || !data.jobs) {
+            console.log("⚠️ Jooble devolvió un formato inesperado.");
+            return [];
+        }
+
+        return data.jobs.map(job => ({
+            titulo: job.title || "",
+            descripcion: job.snippet || "",
+            ubicacion: job.location || "",
+            remoto: job.remote || false,
             fuente: "Jooble"
         }));
 
-        return ofertas;
     } catch (e) {
-        console.error("Error Jooble:", e);
+        console.error("❌ Error en Jooble API:", e.message);
         return [];
     }
 }
