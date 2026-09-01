@@ -6,11 +6,23 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'data.json');
 
+// Middleware para permitir peticiones Cross-Origin (CORS)
+// Permite que GitHub Pages (o cualquier cliente) consulte la API sin bloqueos del navegador
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 // Middlewares para procesar JSON y servir archivos estáticos
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// Endpoint para recibir las ofertas desde GitHub Actions
+// Endpoint para recibir las ofertas desde GitHub Actions (obtenerMultiples.js)
 app.post('/actualizar', (req, res) => {
   try {
     const nuevasOfertas = req.body;
@@ -30,7 +42,7 @@ app.post('/actualizar', (req, res) => {
   }
 });
 
-// Endpoint para obtener las ofertas en la web
+// Endpoint para obtener las ofertas en el frontend (index.html)
 app.get('/api/ofertas', (req, res) => {
   try {
     if (!fs.existsSync(DATA_FILE)) {
