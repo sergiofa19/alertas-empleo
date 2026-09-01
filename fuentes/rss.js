@@ -6,15 +6,15 @@ const parser = new xml2js.Parser({ explicitArray: false });
 async function obtenerRSS() {
   const ofertas = [];
 
-  // Feeds con URLs corregidas y estables
+  // Feeds RSS reales, activos y sin bloqueos
   const feeds = [
     {
-      nombre: 'Tecnoempleo RSS',
-      url: 'https://www.tecnoempleo.com/rss-ofertas-trabajo.portal'
+      nombre: 'Trabajos IT (RSS)',
+      url: 'https://www.ticjob.es/esp/rss/ofertas-trabajo.xml'
     },
     {
       nombre: 'WWWhatsnew Empleo',
-      url: 'https://wwwwwwhatsnew.com/category/empleo/feed/' // Sin www para evitar error de certificado SSL
+      url: 'https://www.wwwhatsnew.com/category/empleo/feed/'
     }
   ];
 
@@ -44,7 +44,7 @@ async function obtenerRSS() {
 
         ofertas.push({
           titulo: item.title?._ || item.title || 'Sin título',
-          empresa: item['dc:creator'] || item.author?.name || 'Desconocida',
+          empresa: item['dc:creator'] || item.author?.name || 'Empresa IT',
           ubicacion: 'España / Remoto',
           enlace: item.link?._ || item.link || item.guid?._ || item.guid || '',
           fuente: feed.nombre,
