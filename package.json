@@ -1,8 +1,8 @@
 {
   "name": "alertas-empleo",
   "version": "1.0.0",
-  "type": "module",
   "dependencies": {
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^2.6.7",
+    "xml2js": "^0.6.2"
   }
 }
