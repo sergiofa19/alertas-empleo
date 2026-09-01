@@ -12,21 +12,35 @@ const requisitos = {
     pais: "España"
 };
 
-// FILTRO RELAJADO
+// FILTRO RELAJADO (FUNCIONA)
 function filtrar(ofertas) {
     return ofertas.filter(oferta => {
         const desc = (oferta.descripcion || "").toLowerCase();
+        const titulo = (oferta.titulo || "").toLowerCase();
 
-        const remoto = oferta.remoto === true;
-        const pais = oferta.pais === requisitos.pais;
+        // País: aceptar España o ubicaciones dentro de España
+        const pais = oferta.pais === requisitos.pais ||
+                     desc.includes("españa") ||
+                     desc.includes("madrid") ||
+                     desc.includes("barcelona") ||
+                     desc.includes("sevilla") ||
+                     desc.includes("valencia");
 
-        // Basta con que aparezca UNA tecnología
+        // Remoto: detectar en descripción o título
+        const remoto = oferta.remoto === true ||
+                       desc.includes("remoto") ||
+                       desc.includes("remote") ||
+                       titulo.includes("remoto") ||
+                       titulo.includes("remote");
+
+        // Tecnologías: basta con que aparezca una
         const algunaTecnologia = requisitos.tecnologias.some(t =>
-            desc.includes(t.toLowerCase())
+            desc.includes(t.toLowerCase()) ||
+            titulo.includes(t.toLowerCase())
         );
 
-        // Si no aparece ninguna tecnología, igualmente la aceptamos
-        return remoto && pais && (algunaTecnologia || true);
+        // Aceptar si es de España y cumple remoto o tecnología
+        return pais && (remoto || algunaTecnologia);
     });
 }
 
@@ -66,4 +80,3 @@ async function main() {
 }
 
 main();
-
