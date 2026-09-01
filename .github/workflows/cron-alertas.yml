@@ -1,0 +1,25 @@
+name: Actualizar alertas SOC
+
+on:
+  schedule:
+    - cron: "0 9 * * *"   # Ejecuta cada día a las 09:00
+  workflow_dispatch:       # Permite ejecutarlo manualmente
+
+jobs:
+  ejecutar-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v3
+
+      - name: Instalar Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Ejecutar script
+        run: node backend.js
