@@ -9,77 +9,97 @@ import obtenerInfoempleo from "./fuentes/infoempleo.js";
 const requisitos = {
     tecnologias: ["SIEM", "Linux", "Microsoft Sentinel", "Azure", "Active Directory"],
     remoto: true,
-    pais: "España"
+    pais: "España",
+    ciudades: ["madrid", "barcelona", "sevilla", "valencia", "españa"]
 };
 
-// FILTRO RELAJADO (FUNCIONA)
+// Pre-calculamos las tecnologías en minúsculas una sola vez
+const tecnologiasLower = requisitos.tecnologias.map(t => t.toLowerCase());
+
 function filtrar(ofertas) {
     return ofertas.filter(oferta => {
+        // Normalizamos los textos comprobando nulos o indefinidos
         const desc = (oferta.descripcion || "").toLowerCase();
         const titulo = (oferta.titulo || "").toLowerCase();
+        const textoCompleto = `${titulo} ${desc}`;
+        const paisOferta = (oferta.pais || "").toLowerCase();
 
-        // País: aceptar España o ubicaciones dentro de España
-        const pais = oferta.pais === requisitos.pais ||
-                     desc.includes("españa") ||
-                     desc.includes("madrid") ||
-                     desc.includes("barcelona") ||
-                     desc.includes("sevilla") ||
-                     desc.includes("valencia") ||
-                     titulo.includes("españa") ||
-                     titulo.includes("madrid") ||
-                     titulo.includes("barcelona") ||
-                     titulo.includes("sevilla") ||
-                     titulo.includes("valencia");
+        // 1. Validar País / Ubicación
+        const esPaisValido = paisOferta === requisitos.pais.toLowerCase() ||
+                             requisitos.ciudades.some(ciudad => textoCompleto.includes(ciudad));
 
-        // Remoto: detectar en descripción o título
-        const remoto = oferta.remoto === true ||
-                       desc.includes("remoto") ||
-                       desc.includes("remote") ||
-                       titulo.includes("remoto") ||
-                       titulo.includes("remote");
+        if (!esPaisValido) return false;
 
-        // Tecnologías: basta con que aparezca una
-        const algunaTecnologia = requisitos.tecnologias.some(t =>
-            desc.includes(t.toLowerCase()) ||
-            titulo.includes(t.toLowerCase())
-        );
+        // 2. Validar Remoto
+        const esRemoto = oferta.remoto === true ||
+                         textoCompleto.includes("remoto") ||
+                         textoCompleto.includes("remote") ||
+                         textoCompleto.includes("teletrabajo");
 
-        // Aceptar si es de España y cumple remoto o tecnología
-        return pais && (remoto || algunaTecnologia);
+        // 3. Validar Tecnologías
+        const tieneTecnologia = tecnologiasLower.some(tec => textoCompleto.includes(tec));
+
+        // Aceptar si cumple país/ubicación Y (remoto O alguna tecnología)
+        return esRemoto || tieneTecnologia;
     });
 }
 
 async function main() {
+    console.log("🔍 Obteniendo ofertas desde todas las fuentes...");
+
+    // Mapa de fuentes para auditar en logs si alguna falla
+    const fuentesMap = [
+        { nombre: "LinkedIn", fn: obtenerLinkedIn },
+        { nombre: "Indeed", fn: obtenerIndeed },
+        { nombre: "Jooble", fn: obtenerJooble },
+        { nombre: "SEPE", fn: obtenerSEPE },
+        { nombre: "Tecnoempleo", fn: obtenerTecnoempleo },
+        { nombre: "Infoempleo", fn: obtenerInfoempleo }
+    ];
+
+    // Ejecutamos en paralelo pero aislamos fallos con Promise.allSettled
+    const resultados = await Promise.allSettled(
+        fuentesMap.map(async ({ nombre, fn }) => {
+            try {
+                const ofertas = await fn();
+                return Array.isArray(ofertas) ? ofertas : [];
+            } catch (err) {
+                console.warn(`⚠️ Error en la fuente [${nombre}]:`, err.message || err);
+                return []; // Si falla, retornamos array vacío para no tirar el proceso
+            }
+        })
+    );
+
+    // Extraemos solo los resultados exitosos
+    const todas = resultados
+        .filter(res => res.status === "fulfilled")
+        .flatMap(res => res.value);
+
+    console.log("📌 Total ofertas obtenidas (sin errores de red):", todas.length);
+
+    const filtradas = filtrar(todas);
+    console.log("🎯 Ofertas filtradas:", filtradas.length);
+
+    if (filtradas.length === 0) {
+        console.log("⚠️ No hay ofertas para enviar a Render.");
+        return;
+    }
+
+    // Envío a Render con manejo explícito del status HTTP
     try {
-        console.log("🔍 Obteniendo ofertas desde todas las fuentes...");
-
-        const fuentes = [
-            obtenerLinkedIn(),
-            obtenerIndeed(),
-            obtenerJooble(),
-            obtenerSEPE(),
-            obtenerTecnoempleo(),
-            obtenerInfoempleo()
-        ];
-
-        const resultados = await Promise.all(fuentes);
-        const todas = resultados.flat();
-
-        console.log("📌 Total ofertas obtenidas:", todas.length);
-
-        const filtradas = filtrar(todas);
-
-        console.log("🎯 Ofertas filtradas:", filtradas.length);
-
-        await fetch("https://alertas-empleo.onrender.com/actualizar", {
+        const response = await fetch("https://alertas-empleo.onrender.com/actualizar", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ ofertas: filtradas })
         });
 
-        console.log("✅ Enviadas a Render correctamente");
+        if (!response.ok) {
+            throw new Error(`HTTP Error Status: ${response.status} ${response.statusText}`);
+        }
+
+        console.log("✅ Ofertas enviadas a Render correctamente.");
     } catch (e) {
-        console.error("❌ Error en obtenerMultiples:", e);
+        console.error("❌ Error al enviar datos al servidor de Render:", e.message);
         process.exit(1);
     }
 }
