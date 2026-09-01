@@ -13,7 +13,6 @@ const requisitos = {
 };
 
 // FILTRO RELAJADO (FUNCIONA)
-// versión sincronizada con workflow
 function filtrar(ofertas) {
     return ofertas.filter(oferta => {
         const desc = (oferta.descripcion || "").toLowerCase();
@@ -25,7 +24,12 @@ function filtrar(ofertas) {
                      desc.includes("madrid") ||
                      desc.includes("barcelona") ||
                      desc.includes("sevilla") ||
-                     desc.includes("valencia");
+                     desc.includes("valencia") ||
+                     titulo.includes("españa") ||
+                     titulo.includes("madrid") ||
+                     titulo.includes("barcelona") ||
+                     titulo.includes("sevilla") ||
+                     titulo.includes("valencia");
 
         // Remoto: detectar en descripción o título
         const remoto = oferta.remoto === true ||
