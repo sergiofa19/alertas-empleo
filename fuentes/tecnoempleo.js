@@ -7,32 +7,30 @@ async function obtenerTecnoempleo() {
 
   try {
     browser = await puppeteer.launch({
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null,
-      headless: 'new',
+      headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
     const page = await browser.newPage();
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
 
     const url = 'https://www.tecnoempleo.com/busqueda-empleo.pro?te=soc';
-    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
     const resultados = await page.evaluate(() => {
-      const items = document.querySelectorAll('.card-body, .item-oferta');
+      const items = document.querySelectorAll('a[href*="/ofertas-trabajo/"]');
       const list = [];
+      const linksVistos = new Set();
 
-      items.forEach(el => {
-        const linkEl = el.querySelector('a[href*="/ofertas-trabajo/"]');
-        const title = linkEl ? linkEl.innerText.trim() : '';
-        const link = linkEl ? linkEl.href : '';
-        const companyEl = el.querySelector('.text-primary, .empresa');
-        const company = companyEl ? companyEl.innerText.trim() : 'Tecnoempleo';
+      items.forEach(linkEl => {
+        const title = linkEl.innerText ? linkEl.innerText.trim() : '';
+        const link = linkEl.href;
 
-        if (title && link) {
+        if (title && link && title.length > 5 && !linksVistos.has(link)) {
+          linksVistos.add(link);
           list.push({
             titulo: title,
-            empresa: company,
+            empresa: 'Tecnoempleo',
             ubicacion: 'España',
             enlace: link,
             fuente: 'Tecnoempleo',
