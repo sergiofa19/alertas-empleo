@@ -14,7 +14,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Update Keepalive file
-        run: echo "Última actualización: $(date)" > keepalive.txt
+        run: |
+          echo "Última actualización: $(date)" > keepalive.txt
 
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v5
