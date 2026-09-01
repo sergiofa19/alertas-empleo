@@ -65,47 +65,4 @@ async function main() {
     ];
 
     const resultados = await Promise.allSettled(
-        fuentesMap.map(async ({ nombre, fn }) => {
-            try {
-                const ofertas = await fn();
-                return Array.isArray(ofertas) ? ofertas : [];
-            } catch (err) {
-                console.warn(`⚠️ Error en la fuente [${nombre}]:`, err.message || err);
-                return [];
-            }
-        })
-    );
-
-    const todas = resultados
-        .filter(res => res.status === "fulfilled")
-        .flatMap(res => res.value);
-
-    console.log("📌 Total ofertas obtenidas:", todas.length);
-
-    const filtradas = filtrar(todas);
-    console.log("🎯 Ofertas filtradas:", filtradas.length);
-
-    if (filtradas.length === 0) {
-        console.log("⚠️ No hay ofertas para enviar a Render.");
-        return;
-    }
-
-    try {
-        const response = await fetch("https://alertas-empleo.onrender.com/actualizar", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ofertas: filtradas })
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP Error Status: ${response.status} ${response.statusText}`);
-        }
-
-        console.log("✅ Ofertas enviadas a Render correctamente.");
-    } catch (e) {
-        console.error("❌ Error al enviar datos al servidor de Render:", e.message);
-        process.exit(1);
-    }
-}
-
-main();
+        fuentesMap.map(async
