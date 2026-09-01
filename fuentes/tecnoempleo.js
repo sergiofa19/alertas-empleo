@@ -14,7 +14,8 @@ async function obtenerTecnoempleo() {
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
 
-    const url = 'https://www.tecnoempleo.com/busqueda-empleo.pro?te=soc';
+    // Cambiado a la landing principal de ofertas para capturar más resultados
+    const url = 'https://www.tecnoempleo.com/ofertas-trabajo/';
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
     const resultados = await page.evaluate(() => {
@@ -26,7 +27,14 @@ async function obtenerTecnoempleo() {
         const title = linkEl.innerText ? linkEl.innerText.trim() : '';
         const link = linkEl.href;
 
-        if (title && link && title.length > 5 && !linksVistos.has(link)) {
+        // Filtra enlaces repetidos o enlaces de paginación estáticos
+        if (
+          title && 
+          link && 
+          title.length > 5 && 
+          !link.endsWith('/ofertas-trabajo/') && 
+          !linksVistos.has(link)
+        ) {
           linksVistos.add(link);
           list.push({
             titulo: title,
