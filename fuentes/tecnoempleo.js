@@ -13,26 +13,33 @@ export default async function obtenerTecnoempleo() {
 
         const html = await res.text();
 
-        // Si no hay HTML, devolvemos vacío
-        if (!html || html.length < 100) {
+        if (!html || html.length < 200) {
             console.log("⚠️ Tecnoempleo devolvió HTML vacío.");
             return [];
         }
 
-        // Extraer ofertas con regex simple
-        const regex = /<h2 class="titulo-oferta">(.*?)<\/h2>[\s\S]*?<p class="descripcion-oferta">(.*?)<\/p>[\s\S]*?<span class="provincia">(.*?)<\/span>/g;
+        // Nuevo patrón 2026
+        const regex = /<a[^>]*class="oferta-link"[^>]*>([\s\S]*?)<\/a>/g;
 
         const ofertas = [];
         let match;
 
         while ((match = regex.exec(html)) !== null) {
-            ofertas.push({
-                titulo: match[1].trim(),
-                descripcion: match[2].trim(),
-                ubicacion: match[3].trim(),
-                remoto: false,
-                fuente: "Tecnoempleo"
-            });
+            const bloque = match[1];
+
+            const titulo = (bloque.match(/<h2[^>]*>(.*?)<\/h2>/)?.[1] || "").trim();
+            const descripcion = (bloque.match(/<p[^>]*class="descripcion"[^>]*>(.*?)<\/p>/)?.[1] || "").trim();
+            const ubicacion = (bloque.match(/<span[^>]*class="provincia"[^>]*>(.*?)<\/span>/)?.[1] || "").trim();
+
+            if (titulo.length > 0) {
+                ofertas.push({
+                    titulo,
+                    descripcion,
+                    ubicacion,
+                    remoto: false,
+                    fuente: "Tecnoempleo"
+                });
+            }
         }
 
         return ofertas;
