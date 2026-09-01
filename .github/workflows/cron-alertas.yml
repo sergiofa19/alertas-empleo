@@ -1,12 +1,12 @@
 name: Obtener ofertas de empleo
 
 on:
+  workflow_dispatch:
   schedule:
-    - cron: "0 9 * * *"   # Ejecuta cada día a las 09:00 UTC
-  workflow_dispatch:       # Permite ejecutarlo manualmente
+    - cron: "*/30 * * * *"   # cada 30 minutos
 
 jobs:
-  obtener-ofertas:
+  ejecutar:
     runs-on: ubuntu-latest
 
     steps:
@@ -16,10 +16,10 @@ jobs:
       - name: Instalar Node
         uses: actions/setup-node@v3
         with:
-          node-version: "18"
+          node-version: 18
 
       - name: Instalar dependencias
         run: npm install
 
-      - name: Ejecutar script de obtención de ofertas
-        run: npm run obtener
+      - name: Ejecutar script
+        run: node obtenerMultiples.js
